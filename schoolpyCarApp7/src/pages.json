@@ -1,0 +1,138 @@
+{
+    "pages": [
+        {
+            "path": "pages/role-select/role-select",
+            "style": {
+                "navigationBarTitleText": "选择角色"
+            }
+        },
+        {
+            "path": "pages/parent/login/login",
+            "style": {
+                "navigationBarTitleText": "家长登录"
+            }
+        },
+        {
+            "path": "pages/parent/home/home",
+            "style": {
+                "navigationBarTitleText": "首页"
+            }
+        },
+        {
+            "path": "pages/parent/message/message",
+            "style": {
+                "navigationBarTitleText": "消息"
+            }
+        },
+        {
+            "path": "pages/parent/message-detail/message-detail",
+            "style": {
+                "navigationBarTitleText": "消息详情"
+            }
+        },
+        {
+            "path": "pages/parent/mine/mine",
+            "style": {
+                "navigationBarTitleText": "个人"
+            }
+        },
+        {
+            "path": "pages/parent/student-bind/student-bind",
+            "style": {
+                "navigationBarTitleText": "绑定学生"
+            }
+        },
+        {
+            "path": "pages/parent/complaint/complaint",
+            "style": {
+                "navigationBarTitleText": "投诉建议"
+            }
+        },
+        {
+            "path": "pages/parent/about/about",
+            "style": {
+                "navigationBarTitleText": "关于"
+            }
+        },
+        {
+            "path": "pages/driver/login/login",
+            "style": {
+                "navigationBarTitleText": "司机登录"
+            }
+        },
+        {
+            "path": "pages/driver/home/home",
+            "style": {
+                "navigationBarTitleText": "首页"
+            }
+        },
+        {
+            "path": "pages/driver/message/message",
+            "style": {
+                "navigationBarTitleText": "消息"
+            }
+        },
+        {
+            "path": "pages/driver/mine/mine",
+            "style": {
+                "navigationBarTitleText": "个人"
+            }
+        },
+        {
+            "path": "pages/driver/route-plan/route-plan",
+            "style": {
+                "navigationBarTitleText": "路线规划"
+            }
+        },
+        {
+            "path": "pages/driver/feedback/feedback",
+            "style": {
+                "navigationBarTitleText": "处理结果反馈"
+            }
+        },
+        {
+            "path": "pages/driver/maintenance/maintenance",
+            "style": {
+                "navigationBarTitleText": "车辆保养反馈"
+            }
+        },
+        {
+            "path": "pages/driver/emergency/emergency",
+            "style": {
+                "navigationBarTitleText": "紧急状况申请"
+            }
+        },
+        {
+            "path": "pages/driver/about/about",
+            "style": {
+                "navigationBarTitleText": "关于"
+            }
+        }
+    ],
+    "globalStyle": {
+        "navigationBarTextStyle": "white",
+        "navigationBarTitleText": "校园接送车",
+        "navigationBarBackgroundColor": "#1E88E5",
+        "backgroundColor": "#F5F7FA"
+    },
+    "tabBar": {
+        "color": "#999999",
+        "selectedColor": "#1E88E5",
+        "backgroundColor": "#FFFFFF",
+        "borderStyle": "black",
+        "list": [
+            {
+                "pagePath": "pages/parent/home/home",
+                "text": "首页"
+            },
+            {
+                "pagePath": "pages/parent/message/message",
+                "text": "消息"
+            },
+            {
+                "pagePath": "pages/parent/mine/mine",
+                "text": "个人"
+            }
+        ]
+    }
+}
