@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}学生管理 - 校车管理系统{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2><i class="fas fa-user-graduate text-success"></i> 学生管理</h2>
+        <p class="text-muted">管理所有乘坐校车的学生信息</p>
+    </div>
+    <button class="btn btn-success" onclick="showAddModal()">
+        <i class="fas fa-plus"></i> 添加学生
+    </button>
+</div>
+
+<div class="card shadow">
+    <div class="card-header bg-light">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h6 class="m-0 font-weight-bold">学生列表</h6>
+            </div>
+            <div class="col-md-6 text-right">
+                <span class="text-muted">共 {{ students|length }} 人</span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>姓名</th>
+                        <th>学号</th>
+                        <th>班级</th>
+                        <th>卡号</th>
+                        <th>家长电话</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.id }}</td>
+                        <td>
+                            <strong>{{ student.name }}</strong>
+                        </td>
+                        <td>{{ student.student_no or '-' }}</td>
+                        <td>{{ student.class_name or '-' }}</td>
+                        <td>
+                            <span class="badge badge-info">{{ student.card_id or '-' }}</span>
+                        </td>
+                        <td>{{ student.parent_phone or '-' }}</td>
+                        <td>
+                            {% if student.status == 'active' %}
+                            <span class="badge badge-success">在读</span>
+                            {% else %}
+                            <span class="badge badge-secondary">离校</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ student.created_at }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info btn-action" onclick="showEditModal({{ student.id }})">
+                                <i class="fas fa-edit"></i> 编辑
+                            </button>
+                            <button class="btn btn-sm btn-danger btn-action" onclick="deleteStudent({{ student.id }})">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                            <button class="btn btn-sm btn-warning btn-action" onclick="testSwipeForStudent('{{ student.card_id }}')">
+                                <i class="fas fa-hand-pointer"></i> 刷卡测试
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-user-graduate fa-4x text-muted mb-3"></i>
+            <p class="text-muted">暂无学生数据</p>
+            <button class="btn btn-success" onclick="showAddModal()">
+                <i class="fas fa-plus"></i> 添加第一个学生
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const studentsData = {{ students|tojson }};
+
+const studentValidationRules = {
+    name: [
+        { type: 'required', label: '姓名' },
+        { type: 'maxLength', max: 50 }
+    ],
+    student_no: [
+        { type: 'maxLength', max: 30 }
+    ],
+    class_name: [
+        { type: 'maxLength', max: 30 }
+    ],
+    card_id: [
+        { type: 'maxLength', max: 30 }
+    ],
+    parent_phone: [
+        { type: 'phone' }
+    ]
+};
+
+function showAddModal() {
+    const modalHtml = `
+        <div class="modal fade" id="studentModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="fas fa-plus"></i> 添加学生</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    </div>
+                    <form id="studentForm">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>姓名 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="name" placeholder="学生姓名" required maxlength="50">
+                                <small class="form-text text-muted">最多50个字符</small>
+                            </div>
+                            <div class="form-group">
+                                <label>学号</label>
+                                <input type="text" class="form-control" name="student_no" placeholder="如：S001" maxlength="30">
+                                <small class="form-text text-muted">最多30个字符</small>
+                            </div>
+                            <div class="form-group">
+                                <label>班级</label>
+                                <input type="text" class="form-control" name="class_name" placeholder="如：三年级1班" maxlength="30">
+                                <small class="form-text text-muted">最多30个字符</small>
+                            </div>
+                            <div class="form-group">
+                                <label>卡号 (刷卡用)</label>
+                                <input type="text" class="form-control" name="card_id" placeholder="如：CARD001" maxlength="30">
+                                <small class="form-text text-muted">最多30个字符，用于刷卡识别</small>
+                            </div>
+                            <div class="form-group">
+                                <label>家长电话 (消息推送用)</label>
+                                <input type="tel" class="form-control" name="parent_phone" placeholder="请输入11位手机号" maxlength="11">
+                                <small class="form-text text-muted">示例：13900139000，用于接收消息推送</small>
+                            </div>
+                            <div class="form-group">
+                                <label>状态</label>
+                                <select class="form-control" name="status">
+                                    <option value="active">在读</option>
+                                    <option value="inactive">离校</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-success">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    $('#modal-container').html(modalHtml);
+    const modal = $('#studentModal');
+    modal.modal('show');
+    
+    setupRealTimeValidation(studentValidationRules);
+    
+    $('#studentForm').submit(function(e) {
+        e.preventDefault();
+        
+        if (!validateForm(studentValidationRules)) {
+            showMessage('请检查表单填写是否正确', 'error');
+            return;
+        }
+        
+        const formData = $(this).serializeObject();
+        
+        $.ajax({
+            url: `${API_BASE}/api/messages/students/`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function() {
+                modal.modal('hide');
+                showMessage('添加成功！', 'success');
+                setTimeout(() => location.reload(), 1000);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON ? xhr.responseJSON.detail : '操作失败';
+                showMessage(error, 'error');
+            }
+        });
+    });
+}
+
+function showEditModal(studentId) {
+    const student = studentsData.find(s => s.id === studentId);
+    if (!student) return;
+    
+    const modalHtml = `
+        <div class="modal fade" id="studentEditModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="fas fa-edit"></i> 编辑学生</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    </div>
+                    <form id="studentEditForm">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>姓名 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="name" value="${student.name || ''}" required maxlength="50">
+                                <small class="form-text text-muted">最多50个字符</small>
+                            </div>
+                            <div class="form-group">
+                                <label>学号</label>
+                                <input type="text" class="form-control" name="student_no" value="${student.student_no || ''}" maxlength="30">
+                                <small class="form-text text-muted">最多30个字符</small>
+                            </div>
+                            <div class="form-group">
+                                <label>班级</label>
+                                <input type="text" class="form-control" name="class_name" value="${student.class_name || ''}" maxlength="30">
+                                <small class="form-text text-muted">最多30个字符</small>
+                            </div>
+                            <div class="form-group">
+                                <label>卡号 (刷卡用)</label>
+                                <input type="text" class="form-control" name="card_id" value="${student.card_id || ''}" maxlength="30">
+                                <small class="form-text text-muted">最多30个字符，用于刷卡识别</small>
+                            </div>
+                            <div class="form-group">
+                                <label>家长电话 (消息推送用)</label>
+                                <input type="tel" class="form-control" name="parent_phone" value="${student.parent_phone || ''}" maxlength="11">
+                                <small class="form-text text-muted">示例：13900139000，用于接收消息推送</small>
+                            </div>
+                            <div class="form-group">
+                                <label>状态</label>
+                                <select class="form-control" name="status">
+                                    <option value="active" ${student.status === 'active' ? 'selected' : ''}>在读</option>
+                                    <option value="inactive" ${student.status === 'inactive' ? 'selected' : ''}>离校</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-success">更新</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    $('#modal-container').html(modalHtml);
+    const modal = $('#studentEditModal');
+    modal.modal('show');
+    
+    setupRealTimeValidation(studentValidationRules);
+    
+    $('#studentEditForm').submit(function(e) {
+        e.preventDefault();
+        
+        if (!validateForm(studentValidationRules)) {
+            showMessage('请检查表单填写是否正确', 'error');
+            return;
+        }
+        
+        const formData = $(this).serializeObject();
+        
+        $.ajax({
+            url: `${API_BASE}/api/messages/students/${studentId}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function() {
+                modal.modal('hide');
+                showMessage('更新成功！', 'success');
+                setTimeout(() => location.reload(), 1000);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON ? xhr.responseJSON.detail : '操作失败';
+                showMessage(error, 'error');
+            }
+        });
+    });
+}
+
+function deleteStudent(studentId) {
+    confirmDelete('确定要删除该学生吗？', function() {
+        $.ajax({
+            url: `${API_BASE}/api/messages/students/${studentId}`,
+            method: 'DELETE',
+            success: function() {
+                showMessage('删除成功！', 'success');
+                setTimeout(() => location.reload(), 1000);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON ? xhr.responseJSON.detail : '操作失败';
+                showMessage(error, 'error');
+            }
+        });
+    });
+}
+
+function testSwipeForStudent(cardId) {
+    if (!cardId || cardId === '-') {
+        showMessage('该学生没有配置卡号，请先编辑学生信息添加卡号', 'error');
+        return;
+    }
+    
+    const swipeType = confirm('点击确定为上车，取消为下车') ? '上车' : '下车';
+    
+    $.ajax({
+        url: `${API_BASE}/api/messages/swipe-card?card_id=${encodeURIComponent(cardId)}&swipe_type=${encodeURIComponent(swipeType)}`,
+        method: 'POST',
+        success: function(data) {
+            showMessage(`刷卡成功！学生: ${data.student.name}, 类型: ${data.swipe_type}`, 'success');
+        },
+        error: function(xhr) {
+            const error = xhr.responseJSON ? xhr.responseJSON.detail : '操作失败';
+            showMessage(error, 'error');
+        }
+    });
+}
+
+$.fn.serializeObject = function() {
+    const obj = {};
+    const arr = this.serializeArray();
+    $.each(arr, function() {
+        obj[this.name] = this.value || '';
+    });
+    return obj;
+};
+</script>
+{% endblock %}

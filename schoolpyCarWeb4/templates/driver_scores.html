@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}司机评分 - 校车管理系统{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2><i class="fas fa-star text-warning"></i> 司机评分</h2>
+        <p class="text-muted">管理司机每日评分记录和信用分</p>
+    </div>
+    <button class="btn btn-primary" onclick="showAddModal()">
+        <i class="fas fa-plus"></i> 添加评分记录
+    </button>
+</div>
+
+<!-- 筛选区域 -->
+<div class="filter-section mb-4">
+    <form class="form-inline">
+        <div class="form-group mr-3">
+            <label class="mr-2">司机:</label>
+            <select class="form-control" id="filterDriver">
+                <option value="">全部司机</option>
+                {% for driver in drivers %}
+                <option value="{{ driver.id }}">{{ driver.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group mr-3">
+            <label class="mr-2">日期:</label>
+            <input type="date" class="form-control" id="filterDate">
+        </div>
+        <button type="button" class="btn btn-info" onclick="filterScores()">
+            <i class="fas fa-search"></i> 筛选
+        </button>
+        <button type="button" class="btn btn-secondary ml-2" onclick="location.reload()">
+            <i class="fas fa-refresh"></i> 重置
+        </button>
+    </form>
+</div>
+
+<!-- 评分说明卡片 -->
+<div class="card mb-4 border-left-warning">
+    <div class="card-body">
+        <h6 class="font-weight-bold text-warning"><i class="fas fa-info-circle"></i> 评分规则说明</h6>
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <span class="text-muted">基础分:</span>
+                <strong class="text-primary">100 分</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted">违章扣分:</span>
+                <strong class="text-danger">-5 分/次</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted">投诉扣分:</span>
+                <strong class="text-danger">-10 分/次</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted">安全驾驶加分:</span>
+                <strong class="text-success">+0.5 分/小时</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-header bg-light">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h6 class="m-0 font-weight-bold">评分记录列表</h6>
+            </div>
+            <div class="col-md-6 text-right">
+                <span class="text-muted">共 {{ scores|length }} 条记录</span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if scores %}
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>司机</th>
+                        <th>评分日期</th>
+                        <th>违章次数</th>
+                        <th>投诉次数</th>
+                        <th>安全驾驶时长</th>
+                        <th>信用分</th>
+                        <th>备注</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in scores %}
+                    <tr>
+                        <td>{{ score.id }}</td>
+                        <td>
+                            <strong>{{ score.driver_name or '未知司机' }}</strong>
+                        </td>
+                        <td>{{ score.score_date }}</td>
+                        <td>
+                            <span class="badge {{ 'badge-danger' if score.violation_count > 0 else 'badge-secondary' }}">
+                                {{ score.violation_count }} 次
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ 'badge-danger' if score.complaint_count > 0 else 'badge-secondary' }}">
+                                {{ score.complaint_count }} 次
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-success">
+                                {{ score.safe_driving_hours }} 小时
+                            </span>
+                        </td>
+                        <td>
+                            {% set score_value = score.credit_score | float %}
+                            <span class="badge {{ 'badge-score-high' if score_value >= 80 else 'badge-score-medium' if score_value >= 60 else 'badge-score-low' }}" style="font-size: 14px;">
+                                {{ score.credit_score }}
+                            </span>
+                        </td>
+                        <td>{{ score.notes or '-' }}</td>
+                        <td>{{ score.created_at }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info btn-action" onclick="viewScore({{ score.id }})">
+                                <i class="fas fa-eye"></i> 查看
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-star fa-4x text-muted mb-3"></i>
+            <p class="text-muted">暂无评分记录</p>
+            <button class="btn btn-primary" onclick="showAddModal()">
+                <i class="fas fa-plus"></i> 添加第一条评分记录
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const driversData = {{ drivers|tojson }};
+const scoresData = {{ scores|tojson }};
+
+function showAddModal() {
+    const driverOptions = driversData.map(d => 
+        `<option value="${d.id}">${d.name}</option>`
+    ).join('');
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    const modalHtml = `
+        <div class="modal fade" id="scoreModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title"><i class="fas fa-plus"></i> 添加评分记录</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <form id="scoreForm">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>司机 <span class="text-danger">*</span></label>
+                                <select class="form-control" name="driver_id" required>
+                                    <option value="">请选择司机</option>
+                                    ${driverOptions}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>评分日期 <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="score_date" value="${today}" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>违章次数</label>
+                                        <input type="number" class="form-control" name="violation_count" value="0" min="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>投诉次数</label>
+                                        <input type="number" class="form-control" name="complaint_count" value="0" min="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>安全驾驶时长(小时)</label>
+                                        <input type="number" class="form-control" name="safe_driving_hours" value="6.0" min="0" step="0.5">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>备注</label>
+                                <textarea class="form-control" name="notes" rows="2"></textarea>
+                            </div>
+                            <div class="alert alert-info">
+                                <small>提示：信用分将根据输入参数自动计算</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-warning">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    $('#modal-container').html(modalHtml);
+    const modal = $('#scoreModal');
+    modal.modal('show');
+    
+    $('#scoreForm').submit(function(e) {
+        e.preventDefault();
+        const formData = $(this).serializeObject();
+        
+        // 转换数值类型
+        formData.violation_count = parseInt(formData.violation_count) || 0;
+        formData.complaint_count = parseInt(formData.complaint_count) || 0;
+        formData.safe_driving_hours = parseFloat(formData.safe_driving_hours) || 0;
+        formData.credit_score = 100;  // 后端会重新计算
+        
+        $.ajax({
+            url: `${API_BASE}/api/drivers/scores/`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function() {
+                modal.modal('hide');
+                showMessage('评分记录添加成功！信用分已自动计算', 'success');
+                setTimeout(() => location.reload(), 1000);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON ? xhr.responseJSON.detail : '操作失败';
+                showMessage(error, 'error');
+            }
+        });
+    });
+}
+
+function viewScore(scoreId) {
+    const score = scoresData.find(s => s.id === scoreId);
+    if (!score) return;
+    
+    const modalHtml = `
+        <div class="modal fade" id="viewScoreModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title"><i class="fas fa-eye"></i> 评分详情</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="text-muted">司机:</td>
+                                <td><strong>${score.driver_name || '-'}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">评分日期:</td>
+                                <td>${score.score_date}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">违章次数:</td>
+                                <td>${score.violation_count} 次</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">投诉次数:</td>
+                                <td>${score.complaint_count} 次</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">安全驾驶时长:</td>
+                                <td>${score.safe_driving_hours} 小时</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">信用分:</td>
+                                <td>
+                                    <span class="badge ${parseFloat(score.credit_score) >= 80 ? 'badge-score-high' : parseFloat(score.credit_score) >= 60 ? 'badge-score-medium' : 'badge-score-low'}" style="font-size: 18px;">
+                                        ${score.credit_score} 分
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">备注:</td>
+                                <td>${score.notes || '-'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    $('#modal-container').html(modalHtml);
+    $('#viewScoreModal').modal('show');
+}
+
+function filterScores() {
+    const driverId = $('#filterDriver').val();
+    const scoreDate = $('#filterDate').val();
+    
+    let url = `${API_BASE}/api/drivers/scores/`;
+    if (driverId) {
+        url += `?driver_id=${driverId}`;
+    } else if (scoreDate) {
+        url += `?score_date=${scoreDate}`;
+    }
+    
+    if (driverId || scoreDate) {
+        $.ajax({
+            url: url,
+            method: 'GET',
+            success: function(data) {
+                showMessage(`筛选完成，共 ${data.length} 条记录`, 'info');
+                // 这里可以实现前端刷新数据
+            }
+        });
+    }
+}
+
+// 辅助函数
+$.fn.serializeObject = function() {
+    const obj = {};
+    const arr = this.serializeArray();
+    $.each(arr, function() {
+        obj[this.name] = this.value || '';
+    });
+    return obj;
+};
+</script>
+{% endblock %}
