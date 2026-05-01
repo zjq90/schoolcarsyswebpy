@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}电子围栏{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-map text-primary mr-2"></i>
+        电子围栏管理
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addGeofenceModal">
+            <i class="fas fa-plus mr-1"></i> 添加围栏
+        </button>
+    </div>
+</div>
+
+<!-- 围栏类型说明 -->
+<div class="alert alert-info">
+    <h6 class="alert-heading">
+        <i class="fas fa-info-circle mr-2"></i>围栏类型说明
+    </h6>
+    <div class="row">
+        <div class="col-md-3">
+            <i class="fas fa-school text-success mr-2"></i>
+            <strong>学校区域：</strong>学生上下学的指定区域
+        </div>
+        <div class="col-md-3">
+            <i class="fas fa-exclamation-triangle text-danger mr-2"></i>
+            <strong>危险路段：</strong>需要特别注意的危险区域
+        </div>
+        <div class="col-md-3">
+            <i class="fas fa-home text-info mr-2"></i>
+            <strong>家庭区域：</strong>学生居住地周边区域
+        </div>
+        <div class="col-md-3">
+            <i class="fas fa-map-marker text-secondary mr-2"></i>
+            <strong>其他区域：</strong>自定义的围栏区域
+        </div>
+    </div>
+    <hr>
+    <p class="mb-0 small">
+        <i class="fas fa-exclamation-circle text-warning mr-1"></i>
+        越界阈值：设置车辆越界多少次后触发预警（默认3次）。超过阈值后，系统将自动通知司机、学校和监管部门。
+    </p>
+</div>
+
+<div class="row">
+    <!-- 地图区域 -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-map mr-2"></i>围栏地图视图
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div id="geofence-map" class="text-center p-5 text-muted" style="min-height: 400px;">
+                    <i class="fas fa-map-marked-alt fa-5x mb-3"></i>
+                    <h5>围栏地图区域</h5>
+                    <p class="mb-0">此处将显示所有电子围栏的位置（可集成地图API）</p>
+                    <small class="text-info">当前模拟显示围栏列表信息</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 围栏统计 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-pie mr-2"></i>围栏统计
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="geofenceTypeChart" style="height: 200px;"></canvas>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="text-success font-weight-bold" id="stat-active-fences">0</div>
+                        <small class="text-muted">启用围栏</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-secondary font-weight-bold" id="stat-inactive-fences">0</div>
+                        <small class="text-muted">禁用围栏</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 围栏列表 -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list mr-2"></i>围栏列表
+        </h6>
+        <div class="form-inline">
+            <label class="mr-2">类型筛选:</label>
+            <select class="form-control form-control-sm" id="filter-fence-type">
+                <option value="">全部类型</option>
+                <option value="school">学校区域</option>
+                <option value="danger">危险路段</option>
+                <option value="home">家庭区域</option>
+                <option value="other">其他区域</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="geofence-table">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>围栏名称</th>
+                        <th>类型</th>
+                        <th>中心坐标</th>
+                        <th>半径</th>
+                        <th>越界阈值</th>
+                        <th>状态</th>
+                        <th>描述</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="10" class="text-center text-muted">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>加载中...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 添加围栏模态框 -->
+<div class="modal fade" id="addGeofenceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-primary mr-2"></i>添加电子围栏
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="addGeofenceForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="add-fence-name">围栏名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="add-fence-name" required placeholder="例如：实验中学门口">
+                            </div>
+                            <div class="form-group">
+                                <label for="add-fence-type">围栏类型 <span class="text-danger">*</span></label>
+                                <select class="form-control" id="add-fence-type" required>
+                                    <option value="">请选择类型</option>
+                                    <option value="school">学校区域</option>
+                                    <option value="danger">危险路段</option>
+                                    <option value="home">家庭区域</option>
+                                    <option value="other">其他区域</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="add-fence-lat">中心纬度 <span class="text-danger">*</span></label>
+                                <input type="number" step="any" class="form-control" id="add-fence-lat" required placeholder="例如：39.9042">
+                            </div>
+                            <div class="form-group">
+                                <label for="add-fence-lng">中心经度 <span class="text-danger">*</span></label>
+                                <input type="number" step="any" class="form-control" id="add-fence-lng" required placeholder="例如：116.4074">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="add-fence-radius">围栏半径（米） <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="add-fence-radius" required min="10" placeholder="例如：500">
+                                <small class="text-muted">建议：学校区域500-1000米，危险路段200-500米</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="add-alert-threshold">越界阈值（次数）</label>
+                                <input type="number" class="form-control" id="add-alert-threshold" value="3" min="1" max="10">
+                                <small class="text-muted">车辆越界多少次后触发预警（默认3次）</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="add-fence-status">初始状态</label>
+                                <select class="form-control" id="add-fence-status">
+                                    <option value="true">启用</option>
+                                    <option value="false">禁用</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="add-fence-desc">描述</label>
+                                <textarea class="form-control" id="add-fence-desc" rows="3" placeholder="围栏区域的详细描述..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> 取消
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i> 保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑围栏模态框 -->
+<div class="modal fade" id="editGeofenceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit text-warning mr-2"></i>编辑电子围栏
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="editGeofenceForm">
+                <input type="hidden" id="edit-fence-id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-fence-name">围栏名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit-fence-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-fence-type">围栏类型 <span class="text-danger">*</span></label>
+                                <select class="form-control" id="edit-fence-type" required>
+                                    <option value="school">学校区域</option>
+                                    <option value="danger">危险路段</option>
+                                    <option value="home">家庭区域</option>
+                                    <option value="other">其他区域</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-fence-lat">中心纬度 <span class="text-danger">*</span></label>
+                                <input type="number" step="any" class="form-control" id="edit-fence-lat" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-fence-lng">中心经度 <span class="text-danger">*</span></label>
+                                <input type="number" step="any" class="form-control" id="edit-fence-lng" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-fence-radius">围栏半径（米） <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="edit-fence-radius" required min="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-alert-threshold">越界阈值（次数）</label>
+                                <input type="number" class="form-control" id="edit-alert-threshold" min="1" max="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-fence-status">状态</label>
+                                <select class="form-control" id="edit-fence-status">
+                                    <option value="true">启用</option>
+                                    <option value="false">禁用</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-fence-desc">描述</label>
+                                <textarea class="form-control" id="edit-fence-desc" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> 取消
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i> 保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteGeofenceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>确认删除
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除电子围栏 <strong id="delete-fence-name" class="text-danger"></strong> 吗？</p>
+                <p class="text-muted">此操作将同时清除与该围栏相关的越界预警记录。</p>
+                <input type="hidden" id="delete-fence-id">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i> 取消
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteGeofence()">
+                    <i class="fas fa-trash mr-1"></i> 确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/geofence.js"></script>
+{% endblock %}

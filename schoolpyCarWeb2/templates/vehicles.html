@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}车辆管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-bus text-primary mr-2"></i>
+        车辆管理
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addVehicleModal">
+            <i class="fas fa-plus mr-1"></i> 添加车辆
+        </button>
+    </div>
+</div>
+
+<!-- 筛选和搜索 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form class="form-inline">
+            <div class="form-group mr-3">
+                <label class="mr-2">状态筛选:</label>
+                <select class="form-control form-control-sm" id="filter-status">
+                    <option value="">全部状态</option>
+                    <option value="online">在线</option>
+                    <option value="offline">离线</option>
+                    <option value="running">运行中</option>
+                    <option value="idle">待机</option>
+                    <option value="maintenance">维护中</option>
+                </select>
+            </div>
+            <div class="form-group mr-3">
+                <label class="mr-2">学校筛选:</label>
+                <select class="form-control form-control-sm" id="filter-school">
+                    <option value="">全部学校</option>
+                </select>
+            </div>
+            <div class="form-group mr-3">
+                <input type="text" class="form-control form-control-sm" id="search-keyword" placeholder="搜索车牌号/司机姓名...">
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="searchVehicles()">
+                <i class="fas fa-search mr-1"></i> 搜索
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- 车辆列表 -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list mr-2"></i>车辆列表
+        </h6>
+        <div class="text-muted">
+            共 <span id="vehicle-count" class="font-weight-bold">0</span> 辆
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="vehicles-table">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>车牌号</th>
+                        <th>车辆类型</th>
+                        <th>核载人数</th>
+                        <th>司机姓名</th>
+                        <th>司机电话</th>
+                        <th>状态</th>
+                        <th>所属学校</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="10" class="text-center text-muted">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>加载中...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- 分页 -->
+        <nav>
+            <ul class="pagination justify-content-center" id="pagination">
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- 添加车辆模态框 -->
+<div class="modal fade" id="addVehicleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-primary mr-2"></i>添加车辆
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="addVehicleForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="add-plate-number">车牌号 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="add-plate-number" required placeholder="例如：京A12345">
+                            </div>
+                            <div class="form-group">
+                                <label for="add-vehicle-type">车辆类型 <span class="text-danger">*</span></label>
+                                <select class="form-control" id="add-vehicle-type" required>
+                                    <option value="">请选择类型</option>
+                                    <option value="小型校车">小型校车</option>
+                                    <option value="中型校车">中型校车</option>
+                                    <option value="大型校车">大型校车</option>
+                                    <option value="专用校车">专用校车</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="add-capacity">核载人数 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="add-capacity" required min="1" placeholder="例如：45">
+                            </div>
+                            <div class="form-group">
+                                <label for="add-school">所属学校 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="add-school" required placeholder="例如：实验中学">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="add-driver-name">司机姓名 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="add-driver-name" required placeholder="例如：张三">
+                            </div>
+                            <div class="form-group">
+                                <label for="add-driver-phone">司机电话 <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="add-driver-phone" required placeholder="例如：13800138000">
+                            </div>
+                            <div class="form-group">
+                                <label for="add-status">初始状态</label>
+                                <select class="form-control" id="add-status">
+                                    <option value="online">在线</option>
+                                    <option value="offline">离线</option>
+                                    <option value="idle">待机</option>
+                                    <option value="maintenance">维护中</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> 取消
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i> 保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑车辆模态框 -->
+<div class="modal fade" id="editVehicleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit text-warning mr-2"></i>编辑车辆
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="editVehicleForm">
+                <input type="hidden" id="edit-vehicle-id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-plate-number">车牌号 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit-plate-number" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-vehicle-type">车辆类型 <span class="text-danger">*</span></label>
+                                <select class="form-control" id="edit-vehicle-type" required>
+                                    <option value="小型校车">小型校车</option>
+                                    <option value="中型校车">中型校车</option>
+                                    <option value="大型校车">大型校车</option>
+                                    <option value="专用校车">专用校车</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-capacity">核载人数 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="edit-capacity" required min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-school">所属学校 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit-school" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit-driver-name">司机姓名 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit-driver-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-driver-phone">司机电话 <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="edit-driver-phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-status">状态</label>
+                                <select class="form-control" id="edit-status">
+                                    <option value="online">在线</option>
+                                    <option value="offline">离线</option>
+                                    <option value="idle">待机</option>
+                                    <option value="maintenance">维护中</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> 取消
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i> 保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteVehicleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>确认删除
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除车辆 <strong id="delete-vehicle-name" class="text-danger"></strong> 吗？</p>
+                <p class="text-muted">此操作不可撤销，将同时删除相关的定位数据和历史轨迹。</p>
+                <input type="hidden" id="delete-vehicle-id">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i> 取消
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteVehicle()">
+                    <i class="fas fa-trash mr-1"></i> 确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/vehicles.js"></script>
+{% endblock %}

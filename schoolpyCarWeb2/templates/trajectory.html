@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}历史轨迹{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-route text-primary mr-2"></i>
+        历史轨迹
+    </h1>
+    <div class="text-muted small">
+        <i class="fas fa-info-circle mr-1"></i>
+        数据保存期限：3个月，到期自动清理
+    </div>
+</div>
+
+<!-- 查询条件 -->
+<div class="card mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-search mr-2"></i>轨迹查询条件
+        </h6>
+    </div>
+    <div class="card-body">
+        <form id="queryForm">
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="select-vehicle">选择车辆 <span class="text-danger">*</span></label>
+                    <select class="form-control" id="select-vehicle" required>
+                        <option value="">请选择车辆</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="start-date">开始日期 <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="start-date" required>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="end-date">结束日期 <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="end-date" required>
+                </div>
+                <div class="form-group col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-search mr-1"></i> 查询轨迹
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 快捷日期选择 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="form-inline">
+            <span class="mr-3 text-muted">快捷选择：</span>
+            <div class="btn-group mr-3">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setQuickDate(1)">今天</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setQuickDate(3)">近3天</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setQuickDate(7)">近7天</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setQuickDate(30)">近30天</button>
+            </div>
+            <span class="text-muted small">
+                <i class="fas fa-database mr-1"></i>
+                当前保留：<strong id="data-retention-days">90</strong> 天数据
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 地图区域 -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-map mr-2"></i>轨迹路线图
+                </h6>
+                <div class="text-muted small" id="trajectory-info">
+                    请选择查询条件
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="trajectory-map" class="text-center p-5 text-muted" style="min-height: 400px;">
+                    <i class="fas fa-route fa-5x mb-3"></i>
+                    <h5>轨迹地图区域</h5>
+                    <p class="mb-0">选择车辆和时间范围后将显示历史轨迹</p>
+                    <small class="text-info">可集成地图API显示完整轨迹路线</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 轨迹统计信息 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-bar mr-2"></i>轨迹统计信息
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="trajectory-stats">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-info-circle fa-3x mb-3"></i>
+                        <p>暂无统计数据</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 轨迹数据表格 -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-table mr-2"></i>轨迹数据明细
+        </h6>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportTrajectory()">
+                <i class="fas fa-file-export mr-1"></i> 导出数据
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="playTrajectory()">
+                <i class="fas fa-play mr-1"></i> 轨迹回放
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover" id="trajectory-table">
+                <thead class="thead-light">
+                    <tr>
+                        <th>序号</th>
+                        <th>记录时间</th>
+                        <th>车牌号</th>
+                        <th>纬度</th>
+                        <th>经度</th>
+                        <th>海拔</th>
+                        <th>速度</th>
+                        <th>方向</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">
+                            <i class="fas fa-info-circle mr-2"></i>请选择查询条件查询轨迹数据
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- 分页 -->
+        <nav>
+            <ul class="pagination justify-content-center" id="trajectory-pagination">
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- 轨迹回放控制 -->
+<div class="card shadow mb-4" id="replay-card" style="display: none;">
+    <div class="card-header py-3 bg-info text-white">
+        <h6 class="m-0 font-weight-bold">
+            <i class="fas fa-play-circle mr-2"></i>轨迹回放控制
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <button type="button" class="btn btn-primary" id="replay-play" onclick="toggleReplay()">
+                    <i class="fas fa-play mr-1"></i> 播放
+                </button>
+            </div>
+            <div class="col-auto">
+                <label class="mr-2">播放速度:</label>
+                <select class="form-control form-control-sm" id="replay-speed">
+                    <option value="1">1x</option>
+                    <option value="2" selected>2x</option>
+                    <option value="5">5x</option>
+                    <option value="10">10x</option>
+                </select>
+            </div>
+            <div class="col">
+                <input type="range" class="custom-range" id="replay-progress" min="0" max="100" value="0">
+            </div>
+            <div class="col-auto">
+                <span id="replay-time" class="text-muted">00:00:00 / 00:00:00</span>
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-outline-secondary" onclick="stopReplay()">
+                    <i class="fas fa-stop mr-1"></i> 停止
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/trajectory.js"></script>
+{% endblock %}
