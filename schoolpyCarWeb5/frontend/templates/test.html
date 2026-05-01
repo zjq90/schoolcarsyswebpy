@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校车后台管理系统 - 测试功能</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-bus"></i> 校车管理系统</h3>
+        </div>
+        <div class="sidebar-menu">
+            <a href="/"><i class="fas fa-tachometer-alt"></i> 控制台</a>
+            <a href="/alarms">
+                <i class="fas fa-exclamation-triangle"></i> 报警管理
+                <span id="alarm-badge" class="nav-badge" style="display: none;">0</span>
+            </a>
+            <a href="/buses"><i class="fas fa-bus"></i> 校车管理</a>
+            <a href="/drivers"><i class="fas fa-id-card"></i> 司机管理</a>
+            <a href="/students"><i class="fas fa-user-graduate"></i> 学生管理</a>
+            <a href="/settings"><i class="fas fa-cog"></i> 系统设置</a>
+            <a href="/test" class="active"><i class="fas fa-flask"></i> 测试功能</a>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 顶部导航栏 -->
+        <div class="navbar-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-flask"></i> 测试功能</h5>
+                <div class="d-flex align-items-center">
+                    <span class="mr-3"><i class="fas fa-user"></i> 管理员</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能说明 -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-info-circle"></i> 功能说明
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-database text-primary"></i> 第一步：生成测试数据</h6>
+                        <p class="text-muted small">点击"生成全部测试数据"按钮，系统将自动创建：用户、司机、校车、学生、报警级别、报警类型等测试数据。</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-bell text-warning"></i> 第二步：触发测试报警</h6>
+                        <p class="text-muted small">点击不同级别的报警按钮，系统将：<br>
+                            • 播放警报声音<br>
+                            • 显示抖屏效果<br>
+                            • 弹出报警详情弹窗</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-exclamation-circle text-danger"></i> 三级报警说明</h6>
+                        <p class="text-muted small">
+                            <span class="badge badge-danger">一级(红)</span>: 事故/火灾/劫持 → 警方联动<br>
+                            <span class="badge badge-warning">二级(橙)</span>: 超速/偏离路线 → 学校管理员<br>
+                            <span class="badge badge-primary">三级(蓝)</span>: 车门异常/滞留 → 家长确认</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试数据管理 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-tools"></i> 数据管理工具
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <button class="btn btn-lg btn-success btn-block mb-2" id="btn-generate">
+                            <i class="fas fa-plus-circle"></i><br>
+                            <span class="h5">生成全部测试数据</span>
+                        </button>
+                        <small class="text-muted">创建用户、司机、校车、学生、报警配置</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <button class="btn btn-lg btn-warning btn-block mb-2" id="btn-reset">
+                            <i class="fas fa-undo"></i><br>
+                            <span class="h5">重置测试数据</span>
+                        </button>
+                        <small class="text-muted">清空所有数据，重新开始测试</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <button class="btn btn-lg btn-info btn-block mb-2" id="btn-refresh">
+                            <i class="fas fa-sync"></i><br>
+                            <span class="h5">刷新统计</span>
+                        </button>
+                        <small class="text-muted">更新当前数据统计</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据统计 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-chart-bar"></i> 当前数据统计
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-2">
+                        <div class="border rounded p-3 bg-light">
+                            <h3 id="stat-users" class="text-primary">0</h3>
+                            <small class="text-muted">用户</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="border rounded p-3 bg-light">
+                            <h3 id="stat-drivers" class="text-success">0</h3>
+                            <small class="text-muted">司机</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="border rounded p-3 bg-light">
+                            <h3 id="stat-buses" class="text-info">0</h3>
+                            <small class="text-muted">校车</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="border rounded p-3 bg-light">
+                            <h3 id="stat-students" class="text-warning">0</h3>
+                            <small class="text-muted">学生</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="border rounded p-3 bg-light">
+                            <h3 id="stat-types" class="text-secondary">0</h3>
+                            <small class="text-muted">报警类型</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="border rounded p-3 bg-light">
+                            <h3 id="stat-alarms" class="text-danger">0</h3>
+                            <small class="text-muted">报警记录</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 一级报警测试 -->
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white">
+                <i class="fas fa-exclamation-circle"></i> 一级报警（红色）- 紧急情况
+                <span class="float-right small">响应机制：一键报警 → 监控中心 → 警方联动</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <button class="btn btn-danger btn-lg btn-block test-alarm-btn" data-level="1" data-type="1">
+                            <i class="fas fa-car-crash fa-2x mb-2"></i><br>
+                            <strong>交通事故</strong><br>
+                            <small class="text-white-50">一键报警触发</small>
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-danger btn-lg btn-block test-alarm-btn" data-level="1" data-type="2">
+                            <i class="fas fa-fire fa-2x mb-2"></i><br>
+                            <strong>火灾警报</strong><br>
+                            <small class="text-white-50">烟雾传感器或手动</small>
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-danger btn-lg btn-block test-alarm-btn" data-level="1" data-type="3">
+                            <i class="fas fa-user-ninja fa-2x mb-2"></i><br>
+                            <strong>劫持警报</strong><br>
+                            <small class="text-white-50">一键报警触发</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 二级报警测试 -->
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-exclamation-triangle"></i> 二级报警（橙色）- 中等紧急
+                <span class="float-right small">响应机制：自动录音录像 → 推送至学校管理员</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <button class="btn btn-warning btn-lg btn-block test-alarm-btn" data-level="2" data-type="4">
+                            <i class="fas fa-tachometer-alt fa-2x mb-2"></i><br>
+                            <strong>超速行驶</strong><br>
+                            <small class="text-secondary">自动检测</small>
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning btn-lg btn-block test-alarm-btn" data-level="2" data-type="5">
+                            <i class="fas fa-route fa-2x mb-2"></i><br>
+                            <strong>偏离路线</strong><br>
+                            <small class="text-secondary">GPS检测</small>
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning btn-lg btn-block test-alarm-btn" data-level="2" data-type="6">
+                            <i class="fas fa-pause-circle fa-2x mb-2"></i><br>
+                            <strong>长时间停留</strong><br>
+                            <small class="text-secondary">超时检测</small>
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning btn-lg btn-block test-alarm-btn" data-level="2" data-type="7">
+                            <i class="fas fa-heartbeat fa-2x mb-2"></i><br>
+                            <strong>学生病情</strong><br>
+                            <small class="text-secondary">手动触发</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 三级报警测试 -->
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle"></i> 三级报警（蓝色）- 一般提醒
+                <span class="float-right small">响应机制：提醒司机复核 → 推送家长确认</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <button class="btn btn-primary btn-lg btn-block test-alarm-btn" data-level="3" data-type="8">
+                            <i class="fas fa-door-open fa-2x mb-2"></i><br>
+                            <strong>车门异常开启</strong><br>
+                            <small class="text-white-50">传感器检测</small>
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary btn-lg btn-block test-alarm-btn" data-level="3" data-type="9">
+                            <i class="fas fa-user-clock fa-2x mb-2"></i><br>
+                            <strong>学生滞留</strong><br>
+                            <small class="text-white-50">下车检测</small>
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary btn-lg btn-block test-alarm-btn" data-level="3" data-type="10">
+                            <i class="fas fa-ban fa-2x mb-2"></i><br>
+                            <strong>一般违规行为</strong><br>
+                            <small class="text-white-50">手动记录</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 自定义测试 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-cogs"></i> 自定义测试
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>选择校车</label>
+                        <select id="select-bus" class="form-control">
+                            <option value="">请先生成测试数据</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>选择报警类型</label>
+                        <select id="select-type" class="form-control">
+                            <option value="">请先生成测试数据</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 d-flex align-items-end">
+                        <button class="btn btn-dark btn-block" id="btn-trigger-custom">
+                            <i class="fas fa-play"></i> 触发报警
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近报警记录 -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-history"></i> 最近报警记录
+                <button class="btn btn-sm btn-outline-secondary float-right" id="btn-refresh-alarms">
+                    <i class="fas fa-sync"></i> 刷新
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="recent-alarms-container">
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-bell-slash fa-3x mb-3"></i>
+                        <h5>暂无报警记录</h5>
+                        <p>点击上方按钮触发测试报警</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 报警声音控制按钮 -->
+    <div class="alarm-sound-control">
+        <button id="alarm-sound-btn" class="alarm-sound-btn">
+            <i class="fas fa-volume-mute"></i>
+        </button>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自定义JS -->
+    <script src="/static/js/app.js"></script>
+
+    <script>
+        const API_BASE = '';
+        let cachedBuses = [];
+        let cachedAlarmTypes = [];
+
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshAllStats();
+            bindButtonEvents();
+        });
+
+        // 绑定按钮事件
+        function bindButtonEvents() {
+            document.getElementById('btn-generate').addEventListener('click', generateAllTestData);
+            document.getElementById('btn-reset').addEventListener('click', resetTestData);
+            document.getElementById('btn-refresh').addEventListener('click', refreshAllStats);
+            document.getElementById('btn-refresh-alarms').addEventListener('click', loadRecentAlarms);
+            document.getElementById('btn-trigger-custom').addEventListener('click', triggerCustomAlarm);
+
+            document.querySelectorAll('.test-alarm-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const typeId = parseInt(this.dataset.type);
+                    const level = parseInt(this.dataset.level);
+                    triggerTestAlarm(typeId, level);
+                });
+            });
+        }
+
+        // 生成全部测试数据
+        async function generateAllTestData() {
+            const btn = document.getElementById('btn-generate');
+            const originalText = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+            
+            try {
+                showToast('正在生成测试数据...', 'info');
+                
+                const response = await fetch(`${API_BASE}/api/test/generate-all`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.message) {
+                    showToast(data.message, 'success');
+                    await refreshAllStats();
+                    await loadBusOptions();
+                    await loadAlarmTypeOptions();
+                }
+            } catch (error) {
+                showToast('生成失败: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // 重置测试数据
+        async function resetTestData() {
+            if (!confirm('确定要重置所有测试数据吗？此操作不可恢复。')) {
+                return;
+            }
+            
+            const btn = document.getElementById('btn-reset');
+            const originalText = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 重置中...';
+            
+            try {
+                showToast('正在重置数据...', 'info');
+                
+                const response = await fetch(`${API_BASE}/api/test/reset`);
+                const data = await response.json();
+                
+                if (data.message) {
+                    showToast(data.message, 'success');
+                    await refreshAllStats();
+                    document.getElementById('select-bus').innerHTML = '<option value="">请先生成测试数据</option>';
+                    document.getElementById('select-type').innerHTML = '<option value="">请先生成测试数据</option>';
+                    document.getElementById('recent-alarms-container').innerHTML = `
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-bell-slash fa-3x mb-3"></i>
+                            <h5>暂无报警记录</h5>
+                            <p>点击上方按钮触发测试报警</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                showToast('重置失败: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // 刷新所有统计
+        async function refreshAllStats() {
+            await Promise.all([
+                refreshStats(),
+                loadBusOptions(),
+                loadAlarmTypeOptions(),
+                loadRecentAlarms()
+            ]);
+        }
+
+        // 刷新统计数据
+        async function refreshStats() {
+            try {
+                const userRes = await fetch(`${API_BASE}/api/users/stats/overview`);
+                const userStats = await userRes.json();
+                updateStat('stat-users', userStats.total || 0);
+
+                const driverRes = await fetch(`${API_BASE}/api/drivers/stats/overview`);
+                const driverStats = await driverRes.json();
+                updateStat('stat-drivers', driverStats.total || 0);
+
+                const busRes = await fetch(`${API_BASE}/api/buses/stats/overview`);
+                const busStats = await busRes.json();
+                updateStat('stat-buses', busStats.total || 0);
+
+                const studentRes = await fetch(`${API_BASE}/api/students/stats/overview`);
+                const studentStats = await studentRes.json();
+                updateStat('stat-students', studentStats.total || 0);
+
+                const typeRes = await fetch(`${API_BASE}/api/alarm-types`);
+                const types = await typeRes.json();
+                cachedAlarmTypes = types || [];
+                updateStat('stat-types', cachedAlarmTypes.length);
+
+                const alarmRes = await fetch(`${API_BASE}/api/alarms/stats/overview`);
+                const alarmStats = await alarmRes.json();
+                let totalAlarms = 0;
+                if (alarmStats && alarmStats.status_stats) {
+                    totalAlarms = (alarmStats.status_stats.pending || 0) +
+                                  (alarmStats.status_stats.processing || 0) +
+                                  (alarmStats.status_stats.resolved || 0) +
+                                  (alarmStats.status_stats.closed || 0);
+                }
+                updateStat('stat-alarms', totalAlarms);
+
+            } catch (error) {
+                console.error('刷新统计失败:', error);
+            }
+        }
+
+        function updateStat(elementId, value) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.textContent = value;
+            }
+        }
+
+        // 加载校车选项
+        async function loadBusOptions() {
+            const select = document.getElementById('select-bus');
+            if (!select) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/buses`);
+                const buses = await response.json();
+                cachedBuses = buses || [];
+                
+                select.innerHTML = '';
+                if (cachedBuses.length > 0) {
+                    cachedBuses.forEach(bus => {
+                        const option = document.createElement('option');
+                        option.value = bus.id;
+                        option.textContent = `${bus.plate_number} (${bus.bus_number})`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '请先生成测试数据';
+                    select.appendChild(option);
+                }
+            } catch (error) {
+                console.error('加载校车失败:', error);
+            }
+        }
+
+        // 加载报警类型选项
+        async function loadAlarmTypeOptions() {
+            const select = document.getElementById('select-type');
+            if (!select) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/alarm-types`);
+                const types = await response.json();
+                cachedAlarmTypes = types || [];
+                
+                select.innerHTML = '';
+                if (cachedAlarmTypes.length > 0) {
+                    cachedAlarmTypes.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type.id;
+                        option.textContent = `${type.name} (${type.level_name || '级别' + type.level_id})`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '请先生成测试数据';
+                    select.appendChild(option);
+                }
+            } catch (error) {
+                console.error('加载报警类型失败:', error);
+            }
+        }
+
+        // 触发测试报警
+        async function triggerTestAlarm(typeId, level) {
+            if (cachedBuses.length === 0) {
+                showToast('请先生成测试数据！', 'warning');
+                return;
+            }
+            
+            const busId = cachedBuses.length > 0 ? cachedBuses[0].id : 1;
+            
+            showToast(`正在触发${level === 1 ? '一级' : level === 2 ? '二级' : '三级'}报警...`, 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/test/trigger-alarm?type_id=${typeId}&bus_id=${busId}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.message) {
+                    showToast(data.message, 'success');
+                    
+                    setTimeout(() => {
+                        checkNewAlarms();
+                    }, 500);
+                    
+                    await refreshStats();
+                    await loadRecentAlarms();
+                } else if (data.error) {
+                    showToast(data.error, 'error');
+                }
+            } catch (error) {
+                showToast('触发失败: ' + error.message, 'error');
+            }
+        }
+
+        // 触发自定义报警
+        function triggerCustomAlarm() {
+            const busSelect = document.getElementById('select-bus');
+            const typeSelect = document.getElementById('select-type');
+            
+            const busId = busSelect.value;
+            const typeId = typeSelect.value;
+            
+            if (!busId || !typeId) {
+                showToast('请选择校车和报警类型', 'warning');
+                return;
+            }
+            
+            const selectedType = cachedAlarmTypes.find(t => t.id === parseInt(typeId));
+            let level = 3;
+            if (selectedType) {
+                if (selectedType.level_color === 'red') level = 1;
+                else if (selectedType.level_color === 'orange') level = 2;
+            }
+            
+            triggerTestAlarm(parseInt(typeId), level);
+        }
+
+        // 加载最近报警
+        async function loadRecentAlarms() {
+            const container = document.getElementById('recent-alarms-container');
+            if (!container) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/alarms?limit=10`);
+                const alarms = await response.json();
+                
+                if (alarms && alarms.length > 0) {
+                    let html = '<div class="table-responsive"><table class="table table-striped table-hover">';
+                    html += '<thead class="thead-dark"><tr><th>级别</th><th>类型</th><th>校车</th><th>位置</th><th>状态</th><th>触发时间</th></tr></thead><tbody>';
+                    
+                    alarms.forEach(alarm => {
+                        let levelBadge = 'badge-secondary';
+                        let levelText = '未知';
+                        
+                        if (alarm.level_color === 'red') {
+                            levelBadge = 'badge-danger';
+                            levelText = '一级';
+                        } else if (alarm.level_color === 'orange') {
+                            levelBadge = 'badge-warning';
+                            levelText = '二级';
+                        } else if (alarm.level_color === 'blue') {
+                            levelBadge = 'badge-primary';
+                            levelText = '三级';
+                        }
+                        
+                        let statusBadge = 'badge-pending';
+                        let statusText = '待处理';
+                        if (alarm.status === 'processing') {
+                            statusBadge = 'badge-warning';
+                            statusText = '处理中';
+                        } else if (alarm.status === 'resolved') {
+                            statusBadge = 'badge-success';
+                            statusText = '已解决';
+                        } else if (alarm.status === 'closed') {
+                            statusBadge = 'badge-secondary';
+                            statusText = '已关闭';
+                        }
+                        
+                        html += `
+                            <tr>
+                                <td><span class="badge ${levelBadge}">${levelText}</span></td>
+                                <td>${alarm.type_name || '-'}</td>
+                                <td>${alarm.bus_plate || '-'}</td>
+                                <td>${alarm.location_name || '-'}</td>
+                                <td><span class="badge ${statusBadge}">${statusText}</span></td>
+                                <td>${formatDateTime(alarm.triggered_at)}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-bell-slash fa-3x mb-3"></i>
+                            <h5>暂无报警记录</h5>
+                            <p>点击上方按钮触发测试报警</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载报警失败:', error);
+                container.innerHTML = `<div class="alert alert-danger">加载失败: ${error.message}</div>`;
+            }
+        }
+
+        // 格式化日期时间
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>
