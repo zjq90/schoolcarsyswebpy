@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校车后台管理系统 - 路线管理</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 15px 20px;
+            border-radius: 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .badge-pill {
+            padding: 6px 12px;
+        }
+        .stat-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+        .stat-icon-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .stat-icon-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .stat-icon-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .stat-icon-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .route-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .route-card .route-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .route-card .route-code {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block sidebar">
+                <div class="sidebar-sticky pt-4">
+                    <div class="text-center mb-5">
+                        <i class="fa fa-bus fa-3x text-white mb-2"></i>
+                        <h5 class="text-white font-weight-bold">校车管理系统</h5>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="fa fa-dashboard"></i>仪表盘
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/driver-behaviors">
+                                <i class="fa fa-user-circle"></i>司机行为检测
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/student-behaviors">
+                                <i class="fa fa-users"></i>学生行为检测
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/captures">
+                                <i class="fa fa-camera"></i>异常抓拍
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/routes">
+                                <i class="fa fa-map"></i>路线管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/traffic">
+                                <i class="fa fa-road"></i>交通数据
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/duties">
+                                <i class="fa fa-calendar"></i>值班管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/users">
+                                <i class="fa fa-user-plus"></i>用户管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/test">
+                                <i class="fa fa-flask"></i>测试功能
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-10 ml-sm-auto px-0">
+                <nav class="navbar navbar-expand-lg navbar-light bg-white">
+                    <div class="container-fluid">
+                        <span class="navbar-brand mb-0 h5"><i class="fa fa-map mr-2"></i>路线管理</span>
+                        <div class="collapse navbar-collapse justify-content-end">
+                            <ul class="navbar-nav">
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                                        <i class="fa fa-user mr-2"></i><span id="currentUser">用户</span>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <a class="dropdown-item" href="#" id="logoutBtn"><i class="fa fa-sign-out mr-2"></i>退出登录</a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="main-content">
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon stat-icon-primary mr-3">
+                                            <i class="fa fa-map"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-weight-bold mb-0" id="totalCount">0</h4>
+                                            <small class="text-muted">总路线数</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon stat-icon-info mr-3">
+                                            <i class="fa fa-clock-o"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-weight-bold mb-0" id="avgDistance">0</h4>
+                                            <small class="text-muted">平均距离(km)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon stat-icon-success mr-3">
+                                            <i class="fa fa-clock-o"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-weight-bold mb-0" id="avgDuration">0</h4>
+                                            <small class="text-muted">平均时长(分钟)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon stat-icon-warning mr-3">
+                                            <i class="fa fa-play-circle"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-weight-bold mb-0" id="activeCount">0</h4>
+                                            <small class="text-muted">进行中</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card table-card mb-4">
+                        <div class="card-header bg-white border-0 pt-4 pb-4">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h6 class="font-weight-bold mb-0"><i class="fa fa-map text-primary mr-2"></i>路线列表</h6>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary btn-sm" id="refreshBtn">
+                                        <i class="fa fa-refresh mr-1"></i>刷新
+                                    </button>
+                                    <button class="btn btn-success btn-sm" id="addRouteBtn">
+                                        <i class="fa fa-plus mr-1"></i>新增路线
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-form mb-4">
+                                <div class="form-row">
+                                    <div class="form-group col-md-3">
+                                        <label class="sr-only">状态</label>
+                                        <select class="form-control" id="filterStatus">
+                                            <option value="">全部状态</option>
+                                            <option value="planned">已规划</option>
+                                            <option value="active">进行中</option>
+                                            <option value="completed">已完成</option>
+                                            <option value="cancelled">已取消</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <button type="button" class="btn btn-primary btn-block" id="searchBtn">
+                                            <i class="fa fa-search mr-1"></i>查询
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>路线名称</th>
+                                            <th>路线编号</th>
+                                            <th>起点</th>
+                                            <th>终点</th>
+                                            <th>距离(km)</th>
+                                            <th>预计时长(分钟)</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="routeTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <span class="text-muted" id="pageInfo">显示 0 条记录</span>
+                                <div class="btn-group">
+                                    <button class="btn btn-outline-secondary" id="prevPageBtn" disabled>
+                                        <i class="fa fa-chevron-left"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="nextPageBtn">
+                                        <i class="fa fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa fa-info-circle mr-2"></i>路线详情</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr><td class="text-muted" style="width: 120px;">路线名称:</td><td id="detailRouteName">-</td></tr>
+                                <tr><td class="text-muted">路线编号:</td><td id="detailRouteCode">-</td></tr>
+                                <tr><td class="text-muted">起点:</td><td id="detailStartPoint">-</td></tr>
+                                <tr><td class="text-muted">终点:</td><td id="detailEndPoint">-</td></tr>
+                                <tr><td class="text-muted">途经站点:</td><td id="detailWaypoints">-</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr><td class="text-muted" style="width: 120px;">距离:</td><td id="detailDistance">-</td></tr>
+                                <tr><td class="text-muted">预计时长:</td><td id="detailDuration">-</td></tr>
+                                <tr><td class="text-muted">状态:</td><td id="detailStatus">-</td></tr>
+                                <tr><td class="text-muted">车辆ID:</td><td id="detailBusId">-</td></tr>
+                                <tr><td class="text-muted">司机ID:</td><td id="detailDriverId">-</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="text-muted">创建时间:</label>
+                        <p id="detailCreatedAt" class="text-muted">-</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-info" id="optimizeBtn">
+                        <i class="fa fa-refresh mr-1"></i>路线优化
+                    </button>
+                    <button type="button" class="btn btn-warning" id="editBtn">
+                        <i class="fa fa-edit mr-1"></i>编辑
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addModalTitle"><i class="fa fa-plus-circle mr-2"></i>新增路线</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="addRouteName">路线名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="addRouteName" placeholder="请输入路线名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="addRouteCode">路线编号</label>
+                        <input type="text" class="form-control" id="addRouteCode" placeholder="自动生成">
+                    </div>
+                    <div class="form-group">
+                        <label for="addStartPoint">起点 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="addStartPoint" placeholder="请输入起点">
+                    </div>
+                    <div class="form-group">
+                        <label for="addEndPoint">终点 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="addEndPoint" placeholder="请输入终点">
+                    </div>
+                    <div class="form-group">
+                        <label for="addWaypoints">途经站点</label>
+                        <textarea class="form-control" id="addWaypoints" rows="2" placeholder="请输入途经站点"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="addDistance">距离(km)</label>
+                            <input type="number" class="form-control" id="addDistance" placeholder="0">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="addDuration">预计时长(分钟)</label>
+                            <input type="number" class="form-control" id="addDuration" placeholder="30">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="addBusId">车辆ID</label>
+                            <input type="number" class="form-control" id="addBusId" placeholder="可选">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="addDriverId">司机ID</label>
+                            <input type="number" class="form-control" id="addDriverId" placeholder="可选">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-success" id="confirmAddBtn">
+                        <i class="fa fa-check mr-1"></i>确认
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const accessToken = localStorage.getItem('access_token');
+        if (!accessToken) {
+            window.location.href = '/';
+        }
+
+        const username = localStorage.getItem('username');
+        if (username) {
+            $('#currentUser').text(username);
+        }
+
+        let currentPage = 0;
+        let pageSize = 10;
+        let currentDetailId = null;
+        let isEditMode = false;
+
+        $('#logoutBtn').on('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('username');
+            window.location.href = '/';
+        });
+
+        function apiRequest(url, method = 'GET', data = null) {
+            const options = {
+                url: url,
+                type: method,
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                contentType: 'application/json'
+            };
+            if (data) {
+                options.data = JSON.stringify(data);
+            }
+            return $.ajax(options);
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'planned': '<span class="badge badge-info badge-pill">已规划</span>',
+                'active': '<span class="badge badge-primary badge-pill">进行中</span>',
+                'completed': '<span class="badge badge-success badge-pill">已完成</span>',
+                'cancelled': '<span class="badge badge-danger badge-pill">已取消</span>'
+            };
+            return badges[status] || '<span class="badge badge-secondary badge-pill">' + status + '</span>';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleString('zh-CN');
+        }
+
+        function loadStatistics() {
+            apiRequest('/api/routes/')
+                .done(function(routes) {
+                    $('#totalCount').text(routes.length || 0);
+                    let totalDistance = 0;
+                    let totalDuration = 0;
+                    let activeCount = 0;
+                    routes.forEach(function(route) {
+                        totalDistance += route.distance_km || 0;
+                        totalDuration += route.estimated_duration_min || 0;
+                        if (route.status === 'active') activeCount++;
+                    });
+                    const count = routes.length || 1;
+                    $('#avgDistance').text(Math.round(totalDistance / count));
+                    $('#avgDuration').text(Math.round(totalDuration / count));
+                    $('#activeCount').text(activeCount);
+                })
+                .fail(function(xhr) {
+                    if (xhr.status === 401) {
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('username');
+                        window.location.href = '/';
+                    }
+                });
+        }
+
+        function loadRoutes() {
+            let url = `/api/routes/?skip=${currentPage * pageSize}&limit=${pageSize}`;
+            const status = $('#filterStatus').val();
+            if (status) {
+                url += `&status=${status}`;
+            }
+            
+            apiRequest(url)
+                .done(function(routes) {
+                    const table = $('#routeTable');
+                    table.empty();
+                    if (routes.length > 0) {
+                        routes.forEach(function(item) {
+                            table.append(`
+                                <tr>
+                                    <td>${item.id}</td>
+                                    <td>${item.route_name}</td>
+                                    <td><span class="badge badge-secondary">${item.route_code || '-'}</span></td>
+                                    <td>${item.start_point}</td>
+                                    <td>${item.end_point}</td>
+                                    <td>${item.distance_km || 0} km</td>
+                                    <td>${item.estimated_duration_min || 0} 分钟</td>
+                                    <td>${getStatusBadge(item.status)}</td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm view-btn" data-id="${item.id}">
+                                            <i class="fa fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-warning btn-sm edit-btn ml-1" data-id="${item.id}">
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm delete-btn ml-1" data-id="${item.id}">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        table.append('<tr><td colspan="9" class="text-center text-muted">暂无数据</td></tr>');
+                    }
+                    $('#pageInfo').text(`显示 ${routes.length} 条记录`);
+                    $('#prevPageBtn').prop('disabled', currentPage === 0);
+                })
+                .fail(function(xhr) {
+                    if (xhr.status === 401) {
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('username');
+                        window.location.href = '/';
+                    }
+                });
+        }
+
+        function viewDetail(id) {
+            currentDetailId = id;
+            isEditMode = false;
+            apiRequest(`/api/routes/${id}`)
+                .done(function(item) {
+                    $('#detailRouteName').text(item.route_name);
+                    $('#detailRouteCode').text(item.route_code || '-');
+                    $('#detailStartPoint').text(item.start_point);
+                    $('#detailEndPoint').text(item.end_point);
+                    $('#detailWaypoints').text(item.waypoints || '-');
+                    $('#detailDistance').text((item.distance_km || 0) + ' km');
+                    $('#detailDuration').text((item.estimated_duration_min || 0) + ' 分钟');
+                    $('#detailStatus').html(getStatusBadge(item.status));
+                    $('#detailBusId').text(item.bus_id || '-');
+                    $('#detailDriverId').text(item.driver_id || '-');
+                    $('#detailCreatedAt').text(formatDate(item.created_at));
+                    $('#detailModal').modal('show');
+                });
+        }
+
+        function editRoute(id) {
+            currentDetailId = id;
+            isEditMode = true;
+            $('#addModalTitle').html('<i class="fa fa-edit mr-2"></i>编辑路线');
+            
+            apiRequest(`/api/routes/${id}`)
+                .done(function(item) {
+                    $('#addRouteName').val(item.route_name);
+                    $('#addRouteCode').val(item.route_code || '');
+                    $('#addStartPoint').val(item.start_point);
+                    $('#addEndPoint').val(item.end_point);
+                    $('#addWaypoints').val(item.waypoints || '');
+                    $('#addDistance').val(item.distance_km || '');
+                    $('#addDuration').val(item.estimated_duration_min || '');
+                    $('#addBusId').val(item.bus_id || '');
+                    $('#addDriverId').val(item.driver_id || '');
+                    $('#addModal').modal('show');
+                });
+        }
+
+        function optimizeRoute(id) {
+            apiRequest(`/api/routes/${id}/optimize`, 'POST')
+                .done(function() {
+                    $('#detailModal').modal('hide');
+                    loadStatistics();
+                    loadRoutes();
+                    alert('路线优化成功！预计行驶时间已减少。');
+                })
+                .fail(function(xhr) {
+                    alert('优化失败：' + (xhr.responseJSON?.detail || '未知错误'));
+                });
+        }
+
+        function addRoute() {
+            const routeName = $('#addRouteName').val().trim();
+            const startPoint = $('#addStartPoint').val().trim();
+            const endPoint = $('#addEndPoint').val().trim();
+            
+            if (!routeName) {
+                alert('请输入路线名称');
+                return;
+            }
+            if (!startPoint) {
+                alert('请输入起点');
+                return;
+            }
+            if (!endPoint) {
+                alert('请输入终点');
+                return;
+            }
+            
+            const data = {
+                route_name: routeName,
+                start_point: startPoint,
+                end_point: endPoint
+            };
+            
+            const routeCode = $('#addRouteCode').val().trim();
+            if (routeCode) data.route_code = routeCode;
+            
+            const waypoints = $('#addWaypoints').val().trim();
+            if (waypoints) data.waypoints = waypoints;
+            
+            const distance = $('#addDistance').val();
+            if (distance) data.distance_km = parseInt(distance);
+            
+            const duration = $('#addDuration').val();
+            if (duration) data.estimated_duration_min = parseInt(duration);
+            
+            const busId = $('#addBusId').val();
+            if (busId) data.bus_id = parseInt(busId);
+            
+            const driverId = $('#addDriverId').val();
+            if (driverId) data.driver_id = parseInt(driverId);
+            
+            if (isEditMode && currentDetailId) {
+                apiRequest(`/api/routes/${currentDetailId}`, 'PUT', data)
+                    .done(function() {
+                        $('#addModal').modal('hide');
+                        loadStatistics();
+                        loadRoutes();
+                        alert('更新成功！');
+                    })
+                    .fail(function(xhr) {
+                        alert('更新失败：' + (xhr.responseJSON?.detail || '未知错误'));
+                    });
+            } else {
+                apiRequest('/api/routes/', 'POST', data)
+                    .done(function() {
+                        $('#addModal').modal('hide');
+                        loadStatistics();
+                        loadRoutes();
+                        alert('添加成功！');
+                    })
+                    .fail(function(xhr) {
+                        alert('添加失败：' + (xhr.responseJSON?.detail || '未知错误'));
+                    });
+            }
+        }
+
+        function deleteRoute(id) {
+            if (confirm('确定要删除这条路线吗？')) {
+                apiRequest(`/api/routes/${id}`, 'DELETE')
+                    .done(function() {
+                        loadStatistics();
+                        loadRoutes();
+                    })
+                    .fail(function(xhr) {
+                        alert('删除失败：' + (xhr.responseJSON?.detail || '未知错误'));
+                    });
+            }
+        }
+
+        function clearAddForm() {
+            $('#addRouteName').val('');
+            $('#addRouteCode').val('');
+            $('#addStartPoint').val('');
+            $('#addEndPoint').val('');
+            $('#addWaypoints').val('');
+            $('#addDistance').val('');
+            $('#addDuration').val('');
+            $('#addBusId').val('');
+            $('#addDriverId').val('');
+        }
+
+        $('#searchBtn').on('click', function() {
+            currentPage = 0;
+            loadRoutes();
+        });
+
+        $('#refreshBtn').on('click', function() {
+            loadStatistics();
+            loadRoutes();
+        });
+
+        $('#addRouteBtn').on('click', function() {
+            currentDetailId = null;
+            isEditMode = false;
+            $('#addModalTitle').html('<i class="fa fa-plus-circle mr-2"></i>新增路线');
+            clearAddForm();
+            $('#addModal').modal('show');
+        });
+
+        $('#prevPageBtn').on('click', function() {
+            if (currentPage > 0) {
+                currentPage--;
+                loadRoutes();
+            }
+        });
+
+        $('#nextPageBtn').on('click', function() {
+            currentPage++;
+            loadRoutes();
+        });
+
+        $(document).on('click', '.view-btn', function() {
+            const id = $(this).data('id');
+            viewDetail(id);
+        });
+
+        $(document).on('click', '.edit-btn', function() {
+            const id = $(this).data('id');
+            editRoute(id);
+        });
+
+        $('#optimizeBtn').on('click', function() {
+            if (currentDetailId) {
+                optimizeRoute(currentDetailId);
+            }
+        });
+
+        $('#editBtn').on('click', function() {
+            $('#detailModal').modal('hide');
+            if (currentDetailId) {
+                editRoute(currentDetailId);
+            }
+        });
+
+        $('#confirmAddBtn').on('click', function() {
+            addRoute();
+        });
+
+        $(document).on('click', '.delete-btn', function() {
+            const id = $(this).data('id');
+            deleteRoute(id);
+        });
+
+        loadStatistics();
+        loadRoutes();
+    </script>
+</body>
+</html>
